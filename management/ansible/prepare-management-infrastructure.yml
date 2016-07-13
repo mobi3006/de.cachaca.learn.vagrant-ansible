@@ -1,0 +1,31 @@
+---
+- hosts: management
+  tasks:
+    - name: "prepare-management-infrastructure | copy vagrant users (of ALL nodes) private-keys to vagrant@MANAGEMENT:~/.ssh/" 
+      copy: 
+        src: "{{ item.src }}" 
+        dest: "{{ item.dest }}" 
+        owner: vagrant 
+        group: vagrant 
+        mode: 0600
+      with_items:       
+        - { src: '/vagrant/.vagrant/machines/NODE1/virtualbox/private_key', 
+            dest: '/home/vagrant/.ssh/private_key_NODE1' }
+        - { src: '/vagrant/.vagrant/machines/NODE2/virtualbox/private_key', 
+            dest: '/home/vagrant/.ssh/private_key_NODE2' }
+        - { src: '/vagrant/.vagrant/machines/MANAGEMENT/virtualbox/private_key', 
+            dest: '/home/vagrant/.ssh/id_rsa' }
+    - name: "prepare-management-infrastructure | copy ansible configuration and inventory file to /etc/ansible/"
+      copy: 
+        src: "{{ item.src }}" 
+        dest: "{{ item.dest }}"
+        backup: yes
+        owner: root 
+        group: root 
+        mode: 0644
+      with_items:       
+        - { src: '/vagrant/management/ansible/ansible.cfg', 
+            dest: '/etc/ansible/' }
+        - { src: '/vagrant/management/ansible/hosts', 
+            dest: '/etc/ansible/hosts' }
+      become: yes
