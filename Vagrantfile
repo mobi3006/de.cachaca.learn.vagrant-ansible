@@ -1,6 +1,13 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+require 'yaml'
+
+current_dir       = File.dirname(File.expand_path(__FILE__))
+configs           = YAML.load_file("#{current_dir}/config.yml")
+machine_config    = configs['machines']
+vbox_image_config = configs['vbox_image']
+
 ###################################################################################################
 # KEEP IN MIND:
 # Vagrant is running the provisioning scripts per default as root-user - but not with an
@@ -20,8 +27,10 @@ Vagrant.configure(2) do |config|
     # Port Range: 10000 ... 19999
     #
     config.vm.define "NODE1", primary: true do |machine|
-        machine.vm.box = "ubuntu/xenial64"
-        machine.vm.hostname ="node1"
+        current_machine_config = machine_config['NODE1']
+        
+        machine.vm.box = vbox_image_config['name']
+        machine.vm.hostname = current_machine_config['hostname']
 
         machine.vm.provider "virtualbox" do |v|
             v.customize [
@@ -32,7 +41,7 @@ Vagrant.configure(2) do |config|
             ]
         end
 
-        machine.vm.network "private_network", ip: "192.168.1.10"
+        machine.vm.network "private_network", ip: current_machine_config['ip_address']
         machine.vm.network "forwarded_port", guest: 22, host: 10022
 
         machine.vm.provision "shell", inline: "echo Finished machine NODE1 creation!"
@@ -43,9 +52,11 @@ Vagrant.configure(2) do |config|
     #
     # Port Range: 20000 ... 29999
     #
-    config.vm.define "NDOE2", primary: true do |machine|
-        machine.vm.box = "ubuntu/xenial64"
-        machine.vm.hostname ="node2"
+    config.vm.define "NODE2", primary: true do |machine|
+        current_machine_config = machine_config['NODE2']
+
+        machine.vm.box = vbox_image_config['name']
+        machine.vm.hostname = current_machine_config['hostname']
 
         machine.vm.provider "virtualbox" do |v|
             v.customize [
@@ -56,7 +67,7 @@ Vagrant.configure(2) do |config|
             ]
         end
 
-        machine.vm.network "private_network", ip: "192.168.1.20"
+        machine.vm.network "private_network", ip: current_machine_config['ip_address']
         machine.vm.network "forwarded_port", guest: 22, host: 20022
 
         machine.vm.provision "shell", inline: "echo Finished machine NODE2 creation!"
@@ -70,8 +81,10 @@ Vagrant.configure(2) do |config|
     #       
     #
     config.vm.define "MANAGEMENT", primary: true do |machine|
-        machine.vm.box = "ubuntu/xenial64"
-        machine.vm.hostname ="management"
+        current_machine_config = machine_config['NODE2']
+
+        machine.vm.box = vbox_image_config['name']
+        machine.vm.hostname = current_machine_config['hostname']
 
         machine.vm.provider "virtualbox" do |v|
             v.customize [
@@ -82,52 +95,36 @@ Vagrant.configure(2) do |config|
             ]
         end
 
-        machine.vm.network "private_network", ip: "192.168.1.50"
+        machine.vm.network "private_network", ip: current_machine_config['ip_address']
         machine.vm.network "forwarded_port", guest: 22, host: 50022
 
         ###########################################################################################
         # copy the private-keys of all vagrant users (of all nodes) to vagrant@management
         # .ssh folder (/home/vagrant/.ssh).
         #
-        #### OPTION 1: working
-        #
-        machine.vm.provision "shell", path: "management/scripts/prepare-management-infrastructure.sh"
-        #
-        #### OPTION 2: preferred but NOT WORKING ... DONT KNOW WHY
-        # 
-        #           because thie error message:
-        #               fatal: [management]: FAILED! 
-        #                   => { "failed": true, 
-        #                        "msg": "the file_name 
-        #                           '/vagrant/.vagrant/machines/NODE1/virtualbox/private_key,' 
-        #                           does not exist, or is not readable"
-        #                      }
-        #           ... but this file exists
-        #   machine.vm.provision "ansible_local" do |ansible|
-        #       # ansible should be installed automatically 
-        #       #   ... you need Vagrant >= 1.8.4 (see https://github.com/mitchellh/vagrant/issues/6858)
-        #       ansible.install  = true
-        #
-        #       ansible.limit = "management"
-        #       ansible.provisioning_path = "/vagrant/management/ansible"
-        #       ansible.playbook = "prepare-management-infrastructure.yml"
-        #       ansible.inventory_path = "/vagrant/management/ansible/ansible-inventory"
-        #    
-        #       ansible.verbose = true
-        #   end        
+        machine.vm.provision "ansible_local" do |ansible|
+            # ansible should be installed automatically 
+            #   ... you need Vagrant >= 1.8.4 (see https://github.com/mitchellh/vagrant/issues/6858)
+            ansible.install  = true
+        
+            ansible.inventory_path = "/vagrant/management/ansible/hosts"
+            ansible.limit = "management"
+
+            ansible.provisioning_path = "/vagrant/management/ansible"
+            ansible.playbook = "prepare-management-infrastructure.yml"
+           
+            ansible.verbose = true
+        end        
 
         ###########################################################################################
         # setup ALL managed nodes
         #
         machine.vm.provision "ansible_local" do |ansible|
-            # ansible should be installed automatically 
-            #   ... you need Vagrant >= 1.8.4 (see https://github.com/mitchellh/vagrant/issues/6858)
-            ansible.install  = true
-            
-            ansible.provisioning_path = "/vagrant/management/ansible"
-            ansible.inventory_path = "/vagrant/management/ansible/ansible-inventory"
-            ansible.playbook = "setup.yml"
+            ansible.inventory_path = "/vagrant/management/ansible/hosts"
             ansible.limit = "all"
+
+            ansible.provisioning_path = "/vagrant/management/ansible"
+            ansible.playbook = "setup.yml"
             
             ansible.verbose = true
         end        

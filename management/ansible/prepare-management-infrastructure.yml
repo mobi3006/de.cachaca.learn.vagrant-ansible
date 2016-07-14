@@ -1,4 +1,7 @@
 ---
+###################################################################################################
+# prepare the management node
+#        
 - hosts: management
   tasks:
     - name: "prepare-management-infrastructure | copy vagrant users (of ALL nodes) private-keys to vagrant@MANAGEMENT:~/.ssh/" 
@@ -28,4 +31,43 @@
             dest: '/etc/ansible/' }
         - { src: '/vagrant/management/ansible/hosts', 
             dest: '/etc/ansible/hosts' }
+      become: yes
+      
+###################################################################################################
+# make ssh-hopping more convenient
+#        
+- hosts: all
+  tasks:
+    - name: "prepare-management-infrastructure | extract vagrant users public key" 
+      copy: 
+        src: "{{ ansible_env.HOME }}/.ssh/authorized_keys" 
+        dest: "{{ ansible_env.HOME }}/.ssh/id_rsa.pub" 
+        owner: vagrant 
+        group: vagrant
+        mode: 0400
+- hosts: managed_nodes
+  tasks:
+    - set_fact:
+        current_user_default_public_ssh_key: "{{ ansible_env.HOME }}/.ssh/id_rsa.pub"
+    - name: "prepare-management-infrastructure | enable vagrant@management to open ssh-connections to managed nodes without password" 
+      authorized_key: 
+        user: vagrant 
+        key: "{{ lookup('file', current_user_default_public_ssh_key) }}/.ssh/id_rsa.pub"
+
+###################################################################################################
+# adapt /etc/hosts to make it more convenient to work
+#        
+- hosts: all
+  tasks:
+    - include_vars: /vagrant/config.yml
+    - name: "prepare-management-infrastructure | adapt /etc/hosts for convenience" 
+      lineinfile: 
+        dest: "/etc/hosts"
+        create: yes 
+        state: present 
+        line: "{{ item }}"
+      with_items:
+        - "{{ machines.MANAGEMENT.ip_address }} MANAGEMENT {{ machines.MANAGEMENT.hostname }}"
+        - "{{ machines.NODE1.ip_address }} NODE1 {{ machines.NODE1.hostname }}"
+        - "{{ machines.NODE2.ip_address }} NODE2 {{ machines.NODE2.hostname }}"
       become: yes

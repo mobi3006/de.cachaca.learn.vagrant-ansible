@@ -4,7 +4,7 @@ This project shows how to get started with vagrant multimachine images to build 
 ## Overview
 Within the Vagrantfile 1 .. n nodes of your solution are created (e. g. each representing a microservice). These machines are only created and not provisioned.
 
-The last node created is the Management-Machine. Ansible is installed automatically by Vagrant and runs Ansible playbooks for provisioning of ALL machines within the solution (possibly also itself).
+The last node created is the Management-Machine. Ansible is installed automatically by Vagrant and runs [Ansible playbooks](https://mobi3006.gitbooks.io/pierreinside/content/ansible.html) for provisioning of ALL machines within the solution (possibly also itself).
 
 ## Vagrants user creation
 Vagrant creates the user "vagrant". Within this project we will use this user and not create additional ones.
