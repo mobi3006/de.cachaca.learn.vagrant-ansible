@@ -1,5 +1,6 @@
 management ansible_connection=local
 
+[managed_nodes]
 ###################################################################################################
 # WHICH MACHINES ARE MANAGED AND HOW TO ACCESS?
 #

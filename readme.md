@@ -1,22 +1,38 @@
 # Vagrant-Ansible-Integration
-This project shows how to get started with vagrant multimachine images to build a complex solution that is provisioned by Ansible.
+This project shows how to get started with vagrant multimachine images to build a complex solution that is provisioned by Ansible. This could be the groundwork to get started ... feel free to adapt it in the way you need it.
 
-## Overview
-Within the Vagrantfile 1 .. n nodes of your solution are created (e. g. each representing a microservice). These machines are only created and not provisioned.
+## How to use?
 
-The last node created is the Management-Machine. Ansible is installed automatically by Vagrant and runs [Ansible playbooks](https://mobi3006.gitbooks.io/pierreinside/content/ansible.html) for provisioning of ALL machines within the solution (possibly also itself).
+### Software Requirements
+* Vagrant 1.8.4
+* VirtualBox 5.x
+* Internet connection
 
-## Vagrants user creation
-Vagrant creates the user "vagrant". Within this project we will use this user and not create additional ones.
+### Deployment
+```
+svn checkout git@github.com:mobi3006/de.cachaca.learn.vagrant-ansible.git
+cd de.cachaca.learn.vagrant-ansible
+vagrant up
+```
+After some minutes you should be able to use the application.
 
-## Vagrants certificate creation
-Vagrant creates (during ``vagrant up``) certificates for each machine (e. g. see .vagrant/machines/NODE1/virtualbox/private_key). Each node is configured in a way that the created private key for that machine (this is key is machine-specific) can be used to login via certificate (``ssh vagrant@node1``).
+## What will be created?
+Within the Vagrantfile currently two additional nodes (``NODE1``, ``NODE2``) are created (each representing a microservice). First, these machines are created and not provisioned. The ``MANAGEMENT''-node is the last one  created. Ansible is installed on ``MANAGEMENT`` automatically by Vagrant. It runs two [Ansible playbooks](https://mobi3006.gitbooks.io/pierreinside/content/ansible.html):
 
-## Ansible certificate usage
-### General Recommendation
-I would recommend to create a certificate for the management-user (maybe not "vagrant"). The private-key has to be put to ``/home/managementUser/.ssh/id_rsa@management-node`` (with 600 permissions) and the public-key has to be put to ``/home/remoteUser/.ssh/authorized_keys@managed-node`` for each managed node (the remoteUser is the one configured within your ansible scripts as ``remote_user: remoteUser`` ... maybe this is done within ``ansible.cfg``).
+* ``prepare-management-infrastructure.yml`` - to finish the Ansible configuration
+* ``setup.yml`` - to provision ALL machines within the solution
 
-### Shortcut
-I configured the private-keys created by Vagrant to be used by Ansible when sending commands via ssh to the managed nodes (see ansible-inventory). Because Vagrant has already allowed the ssh-connect with these private-certificates ... it works out-of-the-box. 
+### Users created by Vagrant
+Vagrant creates the user ``vagrant`` that has the following features
 
+* ``sudo`` on any command is allowed without password
+* a public-private-key (for ssh-connections) is created by Vagrant
+
+Within this project we will not create any additional users.
+
+### Certificates created by Vagrant
+Vagrant creates (during ``vagrant up``) certificates for each machine's ``vagrant`` user (e. g. see ``.vagrant/machines/NODE1/virtualbox/private_key``). Each node is configured in a way that the created private key for that machine (this is key is machine-specific) can be used to login via certificate (``ssh vagrant@node1``).
+In addition to this Vagrant default setup I configured the vagrant@MANAGEMENT user to be able to ssh to the ``vagrant`` users on the managed machines without password.
+
+Ansible is based on ssh-connections and will use the generated ssh-keys to communicate with the managed nodes (see ``/etc/ansible/hosts``).
                                                      

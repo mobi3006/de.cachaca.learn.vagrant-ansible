@@ -2,15 +2,4 @@
 - hosts: all
   tasks:
     - name: test | it
-      lineinfile: dest=/tmp/playbook.run.log create=yes state=present line='pierre'
-      remote_user: vagrant
-- hosts: node1
-  tasks:
-    - name: test | it
-      copy: src=node1/config/node1.cfg dest=/home/vagrant/ owner=vagrant group=vagrant mode=0755
-      remote_user: vagrant
-- hosts: node2
-  tasks:
-    - name: test | it
-      copy: src=node2/config/node1.cfg dest=/home/vagrant/ owner=vagrant group=vagrant mode=0755
-      remote_user: vagrant
+      lineinfile: dest=/tmp/playbook.run.log create=yes state=present line='playbook successfully ran'

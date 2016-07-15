@@ -81,7 +81,7 @@ Vagrant.configure(2) do |config|
     #       
     #
     config.vm.define "MANAGEMENT", primary: true do |machine|
-        current_machine_config = machine_config['NODE2']
+        current_machine_config = machine_config['MANAGEMENT']
 
         machine.vm.box = vbox_image_config['name']
         machine.vm.hostname = current_machine_config['hostname']
